@@ -26,7 +26,8 @@ public class SecurityConfig {
 		http.csrf(csrf -> csrf.disable())
 				.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/**").permitAll()
-						.requestMatchers("/h2-console/**").permitAll() // dev only
+						.requestMatchers("/h2-console/**", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**")
+						.permitAll() // dev only
 						.anyRequest().authenticated())
 				// for H2 console frames (dev only)
 				.headers(headers -> headers.frameOptions(frame -> frame.disable()));
