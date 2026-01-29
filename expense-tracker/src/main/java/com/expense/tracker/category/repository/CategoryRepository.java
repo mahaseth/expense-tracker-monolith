@@ -1,5 +1,6 @@
 package com.expense.tracker.category.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,4 +15,6 @@ public interface CategoryRepository extends JpaRepository<Category, String> {
 	Optional<Category> findByIdAndUserId(String id, String userId);
 
 	boolean existsByUserIdAndNameIgnoreCase(String userId, String name);
+
+	List<Category> findAllByUserIdAndIdIn(String userId, Collection<String> ids);
 }
