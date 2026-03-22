@@ -94,11 +94,11 @@ Pipeline stages: **Checkout** (`checkout scm` — job must use *Pipeline script 
 
 Use **Repository URL** `file:///D:/Projects/expense-tracker-monolith` (Windows; use forward slashes) or the `file:` URL for your machine, with **Script Path** `expense-tracker/Jenkinsfile`.
 
-### Pipeline script (paste)
+### Pipeline script (paste
 
 1. **New Item** → **Pipeline** → OK.
 2. **Pipeline** → **Definition: Pipeline script**.
 3. For **full CI**, paste the contents of `expense-tracker/Jenkinsfile`. For **tests only**, paste `jenkins/jobs/expense-tracker-test.groovy`.
 4. For a **local** tree without Git, point the job workspace at the monorepo root, or use a **Freestyle** job with **Execute Windows batch command**: `cd expense-tracker` then `mvnw.cmd clean verify`.
 
-Requires **JDK 17** and the tool installations above. The built Spring Boot jar is `**tracker-0.0.1-SNAPSHOT.jar`** (Maven `artifactId`); set `JAR_NAME` in the job if you change the POM. To use a fixed path like `/Users/.../expense-tracker` instead of `${WORKSPACE}/expense-tracker`, add `**PROJECT_DIR**` in the job’s environment.
+Requires **JDK 17** and the tool installations above. The built Spring Boot jar is `**tracker-0.0.1-SNAPSHOT.jar`** (Maven `artifactId`); set `JAR_NAME` in the job if you change the POM. To use a fixed path like `/Users/.../expense-tracker` instead of `${WORKSPACE}/expense-tracker`, add `**PROJECT_DIR`** in the job’s environment.
