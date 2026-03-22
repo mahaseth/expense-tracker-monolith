@@ -7,30 +7,20 @@ pipeline {
     }
 
     options {
+        skipDefaultCheckout(true)
         timestamps()
         buildDiscarder(logRotator(numToKeepStr: '15'))
     }
 
     environment {
-        // Monorepo checkout: expense-tracker is under workspace root. Override in the job if needed.
         PROJECT_DIR = "${WORKSPACE}/expense-tracker"
         JAR_NAME = 'tracker-0.0.1-SNAPSHOT.jar'
     }
 
     stages {
-        stage('Check project folder') {
+        stage('Checkout') {
             steps {
-                dir("${PROJECT_DIR}") {
-                    script {
-                        if (isUnix()) {
-                            sh 'pwd'
-                            sh 'ls -la'
-                        } else {
-                            bat 'cd'
-                            bat 'dir'
-                        }
-                    }
-                }
+                checkout scm
             }
         }
 
@@ -52,16 +42,19 @@ pipeline {
             }
         }
 
-        stage('Run application') {
-            when {
-                expression { return isUnix() }
-            }
+        stage('Deploy') {
             steps {
                 dir("${PROJECT_DIR}/target") {
-                    sh '''
-                        pkill -f "${JAR_NAME}" || true
-                        nohup java -jar "${JAR_NAME}" > app.log 2>&1 &
-                    '''
+                    script {
+                        if (isUnix()) {
+                            sh '''
+                                pkill -f "${JAR_NAME}" || true
+                                nohup java -jar "${JAR_NAME}" > app.log 2>&1 &
+                            '''
+                        } else {
+                            bat "start /B java -jar %JAR_NAME% > app.log 2>&1"
+                        }
+                    }
                 }
             }
         }
