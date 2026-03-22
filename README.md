@@ -310,6 +310,43 @@ mvn spring-boot:run
 
 ---
 
+## 5️⃣ Run Unit Tests
+
+```
+cd expense-tracker && ./mvnw test
+```
+
+---
+
+## 6️⃣ Run k6 API Load Tests
+
+**Prerequisites:** Install k6 first (required before running load tests)
+
+```bash
+# macOS (Homebrew)
+brew install k6
+
+# Or download from https://k6.io/docs/getting-started/installation/
+```
+
+1. Start the backend:
+   ```
+   cd expense-tracker && ./mvnw spring-boot:run
+   ```
+
+2. In another terminal, run the load test:
+   ```
+   k6 run load-test/k6-api-load-test.js
+   ```
+
+   Custom options:
+   ```
+   k6 run -e BASE_URL=http://localhost:8080 load-test/k6-api-load-test.js
+   k6 run --vus 20 --duration 2m load-test/k6-api-load-test.js
+   ```
+
+---
+
 # 🔥 Backend Key Engineering Decisions
 
 ## ✔ Interface-driven services
@@ -402,11 +439,27 @@ This is closer to **real production backend engineering**.
 
 # 💻 Frontend
 
-Frontend documentation and setup instructions coming soon.
+React + Vite + Tailwind CSS frontend.
 
-To be developed as a separate module (React, Vue, Angular, or similar).
+## Run the Frontend
 
-### Planned Features:
+1. **Start the backend first** (in one terminal):
+   ```
+   cd expense-tracker && ./mvnw spring-boot:run
+   ```
+
+2. **Install dependencies and start the frontend** (in another terminal):
+   ```
+   cd expense-tracker-web
+   npm install
+   npm run dev
+   ```
+
+3. Open **http://localhost:5173** in your browser.
+
+The frontend proxies `/api` requests to the backend at `http://localhost:8080`.
+
+### Features:
 
 ✅ User-friendly dashboard
 ✅ Expense tracking UI

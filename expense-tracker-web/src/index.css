@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --color-emerald-50: #ecfdf5;
+  --color-emerald-600: #059669;
+  --color-emerald-700: #047857;
+  --color-rose-600: #e11d48;
+  --color-slate-50: #f8fafc;
+  --color-slate-800: #1e293b;
+}
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+  body {
+    @apply min-h-screen bg-slate-50 text-slate-800 font-sans antialiased;
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+  a {
+    @apply text-slate-700 no-underline;
+  }
+  a:hover {
+    @apply text-slate-900;
+  }
+  input, select, textarea {
+    @apply rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 min-w-0;
+  }
+  input:focus, select:focus, textarea:focus {
+    @apply outline-none border-emerald-500 ring-1 ring-emerald-500/30;
+  }
+}
