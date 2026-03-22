@@ -1,0 +1,77 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'JDK17'
+        maven 'Maven2'
+    }
+
+    options {
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '15'))
+    }
+
+    environment {
+        // Monorepo checkout: expense-tracker is under workspace root. Override in the job if needed.
+        PROJECT_DIR = "${WORKSPACE}/expense-tracker"
+        JAR_NAME = 'tracker-0.0.1-SNAPSHOT.jar'
+    }
+
+    stages {
+        stage('Check project folder') {
+            steps {
+                dir("${PROJECT_DIR}") {
+                    script {
+                        if (isUnix()) {
+                            sh 'pwd'
+                            sh 'ls -la'
+                        } else {
+                            bat 'cd'
+                            bat 'dir'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                dir("${PROJECT_DIR}") {
+                    script {
+                        if (isUnix()) {
+                            sh 'java -version'
+                            sh 'mvn -version'
+                            sh 'mvn clean package -DskipTests -B --no-transfer-progress'
+                        } else {
+                            bat 'java -version'
+                            bat 'mvn -version'
+                            bat 'mvn clean package -DskipTests -B --no-transfer-progress'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Run application') {
+            when {
+                expression { return isUnix() }
+            }
+            steps {
+                dir("${PROJECT_DIR}/target") {
+                    sh '''
+                        pkill -f "${JAR_NAME}" || true
+                        nohup java -jar "${JAR_NAME}" > app.log 2>&1 &
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            archiveArtifacts artifacts: 'expense-tracker/target/*.jar',
+                fingerprint: true,
+                onlyIfSuccessful: true
+        }
+    }
+}
