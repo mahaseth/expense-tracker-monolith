@@ -190,4 +190,179 @@ class ExpenseServiceTest {
 
 		verify(expenseRepository).delete(expense);
 	}
+
+	@Test
+	void update_ValidRequest_PersistsChanges() {
+		LocalDate day = LocalDate.of(2026, 3, 1);
+		UpdateExpenseRequest request = new UpdateExpenseRequest();
+		request.setTitle(" Updated ");
+		request.setAmount(99.0);
+		request.setCategoryId(" cat-1 ");
+		request.setNotes(" note ");
+		request.setExpenseDate(day);
+
+		Expense existing = Expense.builder()
+				.id("exp-1")
+				.userId("user-1")
+				.categoryId("cat-1")
+				.title("Old")
+				.amount(1.0)
+				.expenseDate(day)
+				.build();
+
+		when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+		when(expenseRepository.findByIdAndUserId("exp-1", "user-1")).thenReturn(Optional.of(existing));
+		when(categoryRepository.findByIdAndUserId("cat-1", "user-1")).thenReturn(Optional.of(testCategory));
+		when(expenseRepository.save(existing)).thenAnswer(inv -> inv.getArgument(0));
+
+		ExpenseResponse mapped = new ExpenseResponse("exp-1", "cat-1", "Updated", 99.0, "note", day);
+		when(expenseMapper.toResponse(existing)).thenReturn(mapped);
+
+		ExpenseResponse result = expenseService.update("exp-1", request);
+
+		assertEquals("Updated", result.getTitle());
+		assertEquals(99.0, result.getAmount());
+		verify(expenseRepository).save(existing);
+	}
+
+	@Test
+	void update_InvalidCategory_Throws() {
+		UpdateExpenseRequest request = new UpdateExpenseRequest();
+		request.setTitle("T");
+		request.setAmount(1.0);
+		request.setCategoryId("bad");
+		request.setExpenseDate(LocalDate.now());
+
+		Expense existing = Expense.builder()
+				.id("exp-1")
+				.userId("user-1")
+				.categoryId("cat-1")
+				.title("Old")
+				.amount(1.0)
+				.expenseDate(LocalDate.now())
+				.build();
+
+		when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+		when(expenseRepository.findByIdAndUserId("exp-1", "user-1")).thenReturn(Optional.of(existing));
+		when(categoryRepository.findByIdAndUserId("bad", "user-1")).thenReturn(Optional.empty());
+
+		assertThrows(IllegalArgumentException.class, () -> expenseService.update("exp-1", request));
+	}
+
+	@Test
+	void getById_NotFound_Throws() {
+		when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+		when(expenseRepository.findByIdAndUserId("missing", "user-1")).thenReturn(Optional.empty());
+
+		assertThrows(RuntimeException.class, () -> expenseService.getById("missing"));
+	}
+
+	@Test
+	void getAll_DateRangeOnly_UsesDateQuery() {
+		LocalDate from = LocalDate.of(2026, 1, 1);
+		LocalDate to = LocalDate.of(2026, 1, 31);
+		Expense expense = Expense.builder()
+				.id("exp-1")
+				.userId("user-1")
+				.categoryId("cat-1")
+				.title("Groceries")
+				.amount(50.0)
+				.expenseDate(from)
+				.build();
+		when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+		when(expenseRepository.findAllByUserIdAndExpenseDateBetweenOrderByExpenseDateDesc("user-1", from, to))
+				.thenReturn(List.of(expense));
+
+		ExpenseResponse response = new ExpenseResponse("exp-1", "cat-1", "Groceries", 50.0, null, from);
+		when(expenseMapper.toResponse(expense)).thenReturn(response);
+
+		List<ExpenseResponse> result = expenseService.getAll(from, to, null);
+
+		assertEquals(1, result.size());
+		verify(expenseRepository).findAllByUserIdAndExpenseDateBetweenOrderByExpenseDateDesc("user-1", from, to);
+	}
+
+	@Test
+	void getAll_CategoryOnly_UsesCategoryQuery() {
+		Expense expense = Expense.builder()
+				.id("exp-1")
+				.userId("user-1")
+				.categoryId("cat-1")
+				.title("Groceries")
+				.amount(50.0)
+				.expenseDate(LocalDate.now())
+				.build();
+		when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+		when(categoryRepository.findByIdAndUserId("cat-1", "user-1")).thenReturn(Optional.of(testCategory));
+		when(expenseRepository.findAllByUserIdAndCategoryIdOrderByExpenseDateDesc("user-1", "cat-1"))
+				.thenReturn(List.of(expense));
+
+		ExpenseResponse response = new ExpenseResponse("exp-1", "cat-1", "Groceries", 50.0, null,
+				LocalDate.now());
+		when(expenseMapper.toResponse(expense)).thenReturn(response);
+
+		List<ExpenseResponse> result = expenseService.getAll(null, null, " cat-1 ");
+
+		assertEquals(1, result.size());
+		verify(expenseRepository).findAllByUserIdAndCategoryIdOrderByExpenseDateDesc("user-1", "cat-1");
+	}
+
+	@Test
+	void getAll_DateRangeAndCategory_UsesCombinedQuery() {
+		LocalDate from = LocalDate.of(2026, 1, 1);
+		LocalDate to = LocalDate.of(2026, 1, 31);
+		Expense expense = Expense.builder()
+				.id("exp-1")
+				.userId("user-1")
+				.categoryId("cat-1")
+				.title("Groceries")
+				.amount(50.0)
+				.expenseDate(from)
+				.build();
+		when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+		when(categoryRepository.findByIdAndUserId("cat-1", "user-1")).thenReturn(Optional.of(testCategory));
+		when(expenseRepository.findAllByUserIdAndCategoryIdAndExpenseDateBetweenOrderByExpenseDateDesc(
+				"user-1", "cat-1", from, to)).thenReturn(List.of(expense));
+
+		ExpenseResponse response = new ExpenseResponse("exp-1", "cat-1", "Groceries", 50.0, null, from);
+		when(expenseMapper.toResponse(expense)).thenReturn(response);
+
+		List<ExpenseResponse> result = expenseService.getAll(from, to, "cat-1");
+
+		assertEquals(1, result.size());
+		verify(expenseRepository).findAllByUserIdAndCategoryIdAndExpenseDateBetweenOrderByExpenseDateDesc(
+				"user-1", "cat-1", from, to);
+	}
+
+	@Test
+	void create_WithNotes_TrimsNotes() {
+		CreateExpenseRequest request = new CreateExpenseRequest();
+		request.setTitle(" Groceries ");
+		request.setAmount(50.0);
+		request.setCategoryId("cat-1");
+		request.setNotes("  note  ");
+		request.setExpenseDate(LocalDate.now());
+
+		when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+		when(categoryRepository.findByIdAndUserId("cat-1", "user-1")).thenReturn(Optional.of(testCategory));
+
+		Expense savedExpense = Expense.builder()
+				.id("exp-1")
+				.userId("user-1")
+				.categoryId("cat-1")
+				.title("Groceries")
+				.amount(50.0)
+				.notes("note")
+				.expenseDate(LocalDate.now())
+				.build();
+		when(expenseRepository.save(any(Expense.class))).thenReturn(savedExpense);
+
+		ExpenseResponse expectedResponse = new ExpenseResponse("exp-1", "cat-1", "Groceries", 50.0, "note",
+				LocalDate.now());
+		when(expenseMapper.toResponse(savedExpense)).thenReturn(expectedResponse);
+
+		ExpenseResponse result = expenseService.create(request);
+
+		assertEquals("note", result.getNotes());
+	}
 }

@@ -24,20 +24,45 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build & Test with jacoco') {
             steps {
                 dir("${PROJECT_DIR}") {
                     script {
                         if (isUnix()) {
                             sh 'java -version'
                             sh 'mvn -version'
-                            sh 'mvn clean package -DskipTests -B --no-transfer-progress'
+                            sh 'mvn clean verify -B --no-transfer-progress'
                         } else {
                             bat 'java -version'
                             bat 'mvn -version'
-                            bat 'mvn clean package -DskipTests -B --no-transfer-progress'
+                            bat 'mvn clean verify -B --no-transfer-progress'
                         }
                     }
+                }
+            }
+        }
+
+        stage('SonarQube analysis') {
+            steps {
+                dir("${PROJECT_DIR}") {
+                    script {
+                        // Jenkins: Manage Jenkins → Configure System → SonarQube servers → name must match below
+                        withSonarQubeEnv('SonarQube') {
+                            if (isUnix()) {
+                                sh 'mvn -B --no-transfer-progress sonar:sonar'
+                            } else {
+                                bat 'mvn -B --no-transfer-progress sonar:sonar'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        stage('SonarQube quality gate') {
+            steps {
+                // Requires SonarQube webhook → https://<jenkins>/sonarqube-webhook/
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
