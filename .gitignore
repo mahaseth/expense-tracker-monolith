@@ -1,6 +1,7 @@
 ### Expense Tracker Changes ###
 expense-tracker/HELP.md
 expense-tracker/target/
+expense-tracker-automation/target/
 expense-tracker/.mvn/wrapper/maven-wrapper.jar
 !expense-tracker/**/src/main/**/target/
 !expense-tracker/**/src/test/**/target/

@@ -88,7 +88,7 @@ Push a commit to `main`. The job should start without clicking **Build Now**. Ke
 
 **Note:** If you prefer not to expose Jenkins, use **Poll SCM** in the job (e.g. `H/5 * * * *` every five minutes) instead — no ngrok, but builds are delayed until the next poll.
 
-Pipeline stages: **Checkout** (`checkout scm` — job must use *Pipeline script from SCM*), **Build** (`mvn clean package -DskipTests`), **Deploy** (runs `java -jar` in the background; Linux/macOS stops a previous instance via `pkill`, Windows uses `start /B`). Archives `expense-tracker/target/*.jar` on success.
+Pipeline stages: **Checkout** (`checkout scm` — job must use *Pipeline script from SCM*), **Build & Test** (`mvn clean verify`), **SonarQube** (`mvn sonar:sonar` with Jenkins SonarQube server config — see `jenkins/sonar.md`), **Deploy** (runs `java -jar` in the background; Linux/macOS stops a previous instance via `pkill`, Windows uses `start /B`). Archives `expense-tracker/target/*.jar` on success.
 
 ### Pipeline from a local clone (no GitHub)
 

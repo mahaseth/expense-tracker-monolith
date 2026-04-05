@@ -1,0 +1,9 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="expense-tracker-automation">
+	<test name="ui">
+		<classes>
+			<class name="com.expense.automation.RegisterTest"/>
+			<class name="com.expense.automation.LoginTest"/>
+		</classes>
+	</test>
+</suite>
